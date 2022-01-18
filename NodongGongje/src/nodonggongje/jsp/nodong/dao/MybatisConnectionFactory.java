@@ -15,7 +15,7 @@ public class MybatisConnectionFactory {
 	
 	static{
 		try {
-			Reader reader = Resources.getResourceAsReader("nodonggongje/jsp/nodong/dao/config.xml");
+			Reader reader = Resources.getResourceAsReader("jstech/jsp/check/dao/config.xml");
 			
 			if(sqlSessionFactory == null){
 				sqlSessionFactory = new SqlSessionFactoryBuilder().build(reader);
