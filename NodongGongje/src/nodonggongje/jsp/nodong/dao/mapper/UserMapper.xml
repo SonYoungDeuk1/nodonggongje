@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 이 XML의 구조대로 구현될 클래스의 이름 => Impl클래스를 대체한다. -->
+<mapper namespace="UserMapper">
+
+    <!-- Beans 클래스의 객체이름(id)과 클래스이름(type)을 명시한다. -->
+	<resultMap type="teajosan.jsp.page.model.User" id="user">
+	    <!-- Beans의 멤버변수(property)이름과 대상 테이블의 컬럼(column)을 연결한다. -->
+        <result property="idx" column="idx"/>
+        <result property="user_id" column="user_id"/>
+        <result property="user_pw" column="user_pw"/>
+        <result property="user_pw_old" column="user_pw_old"/>
+        <result property="user_name" column="user_name"/>
+        <result property="user_gender" column="user_gender"/>
+        <result property="user_birthday" column="user_birthday"/>
+        <result property="user_phone" column="user_phone"/>
+        <result property="regdate" column="regdate"/>
+        <result property="editdate" column="editdate"/>
+        <result property="admin" column="admin"/>
+        
+	</resultMap>
+	
+	<!-- 아이디 중복검사를 수행한다. -->
+	<select id="selectUserCount" parameterType="teajosan.jsp.page.model.User" resultType="int">
+	  SELECT count(idx) FROM teajosan.user WHERE user_id=#{user_id}
+	</select>
+	
+	<!-- 유저 저장하기 -->
+	<insert id="insertUser" parameterType="teajosan.jsp.page.model.User" useGeneratedKeys="true" keyProperty="idx">
+	  INSERT INTO teajosan.user 
+	    (user_id, user_pw, user_name, user_gender, user_birthday, user_phone, regdate, editdate, admin)
+	  VALUES 
+	    (#{user_id}, hex(aes_encrypt('user_pw', #{user_pw})), #{user_name}, #{user_gender}, #{user_birthday}, #{user_phone}, now(), now(), 2)
+	</insert>
+	
+	<!-- 아이디와 비밀번호가 일치하는 회원정보를 조회한다. -->
+	<select id="selectLoginInfo" parameterType="teajosan.jsp.page.model.User" resultMap="user">
+	  SELECT
+	      idx, user_id, user_pw, user_name, user_gender, user_birthday, user_phone, 
+	      DATE_FORMAT(regdate, '%Y-%m-%d') AS regdate, DATE_FORMAT(editdate, '%Y-%m-%d') AS editdate,  admin
+	  FROM teajosan.user 
+	  WHERE user_id=#{user_id} AND user_pw = hex(aes_encrypt('user_pw', #{user_pw}))
+	  ORDER BY idx DESC
+	  LIMIT 0, 1
+	</select>
+	
+	<!-- idx가 일치하는 회원정보를 조회한다. -->
+	<select id="selectUserInfo" parameterType="teajosan.jsp.page.model.User" resultMap="user">
+	  SELECT
+	      idx, user_id, user_pw, user_name, user_gender, user_birthday, user_phone, 
+	      DATE_FORMAT(regdate, '%Y-%m-%d') AS regdate, DATE_FORMAT(editdate, '%Y-%m-%d') AS editdate, admin
+	  FROM teajosan.user 
+	  WHERE idx = #{idx}
+	  ORDER BY idx DESC
+	  LIMIT 0, 1
+	</select>
+	
+	<!-- 아이디와 비밀번호가 일치하는 관리자 회원 정보를 조회한다. -->
+	<select id="selectLoginInfoAdmin" parameterType="teajosan.jsp.page.model.User" resultMap="user">
+	  SELECT
+	      idx, user_id, user_pw, user_name, user_gender, user_birthday, user_phone, 
+	      DATE_FORMAT(regdate, '%Y-%m-%d') AS regdate, DATE_FORMAT(editdate, '%Y-%m-%d') AS editdate, admin
+	  FROM teajosan.user 
+	  WHERE user_id=#{user_id} AND user_pw = hex(aes_encrypt('user_pw', #{user_pw})) AND admin = 1
+	  ORDER BY idx DESC
+	  LIMIT 0, 1
+	</select>
+	
+	<!-- 비번 수정하기 -->
+	<update id="updateUserPassword" parameterType="teajosan.jsp.page.model.User">
+	  UPDATE teajosan.user SET 
+	     user_pw = hex(aes_encrypt('user_pw', #{user_pw}))
+	  WHERE user_id=#{user_id} AND user_pw = hex(aes_encrypt('user_pw', #{user_pw_old}))
+	</update>
+	
+	<!-- 회원정보 수정하기 -->
+	<update id="updateUserInfo" parameterType="teajosan.jsp.page.model.User">
+	  UPDATE teajosan.user SET 
+	     user_name = #{user_name}, user_gender = #{user_gender}, user_birthday = #{user_birthday}, user_phone = #{user_phone}, editdate = now()
+	  WHERE user_id=#{user_id} AND user_pw = hex(aes_encrypt('user_pw', #{user_pw}))
+	</update>
+	
+	<!-- 회원정보 수정하기 (SNS)-->
+	<update id="updateUserInfoSns" parameterType="teajosan.jsp.page.model.User">
+	  UPDATE teajosan.user SET 
+	     user_name = #{user_name}, user_gender = #{user_gender}, user_birthday = #{user_birthday}, user_phone = #{user_phone}, editdate = now()
+	  WHERE user_id=#{user_id}
+	</update>
+	
+	<!-- 유저 리스트 -->
+	<select id="selectUserList" parameterType="teajosan.jsp.page.model.User" resultMap="user">
+	  SELECT
+    	idx, user_id, user_pw, user_name, user_gender, user_birthday, user_phone, 
+	      DATE_FORMAT(regdate, '%Y-%m-%d') AS regdate, DATE_FORMAT(editdate, '%Y-%m-%d') AS editdate, admin
+    	
+	  FROM
+    	teajosan.user 
+	  ORDER BY
+    	idx ASC
+	</select>
+	
+	<!-- 아이디가 일치하는 회원정보를 조회한다. -->
+	<select id="selectLoginInfoSns" parameterType="teajosan.jsp.page.model.User" resultMap="user">
+	  SELECT
+	  	idx, user_id, user_pw, user_name, user_gender, user_birthday, user_phone, 
+	      DATE_FORMAT(regdate, '%Y-%m-%d') AS regdate, DATE_FORMAT(editdate, '%Y-%m-%d') AS editdate,  admin
+	      
+	  FROM teajosan.user 
+	  WHERE user_id=#{user_id}
+	  ORDER BY idx DESC
+	  LIMIT 0, 1
+	</select>
+	
+	<!-- 유저 저장하기(SNS) -->
+	<insert id="insertUserSns" parameterType="teajosan.jsp.page.model.User" useGeneratedKeys="true" keyProperty="idx">
+	  INSERT INTO teajosan.user 
+	    (user_id, user_name, user_gender, user_birthday, user_phone, regdate, editdate, admin)
+	  VALUES 
+	    (#{user_id}, #{user_name}, #{user_gender}, #{user_birthday}, #{user_phone}, now(), now(), 2)
+	</insert>
+	
+	
+	
+</mapper>
